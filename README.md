@@ -1,2 +1,2 @@
 # NetworkCall
-NetworkCall for request api 
+NetworkCall for handle request api with retorfit 
