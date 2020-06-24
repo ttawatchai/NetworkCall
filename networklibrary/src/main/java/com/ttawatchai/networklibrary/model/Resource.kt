@@ -16,12 +16,23 @@ data class Resource<out T>(val status: Status, val data: T?, val message: String
             )
         }
 
-        fun <T> error(msg: String, data: T?): Resource<T> {
-            return Resource(
-                Status.ERROR,
-                data,
-                msg
-            )
+        fun <T> error(msg: String, data: T?, error: String): Resource<T>? {
+            return when (error) {
+                "null" -> {
+                    Resource(Status.ERROR, data, "$msg- code: timeout")
+                }
+                "internet error" -> {
+                    Resource(Status.ERROR, data, "$msg-")
+                }
+                else -> {
+                    Resource(Status.ERROR, data, "$msg- code: $error")
+                }
+            }
+
+        }
+
+        fun <T> connectFiled(msg: String, data: T?, error: String): Resource<T>? {
+            return Resource(Status.ERROR, data, "$msg-")
         }
 
         fun <T> loading(data: T?): Resource<T> {

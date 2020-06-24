@@ -1,5 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NetworkLibrary</string>
     <string name="txt_internet_error">ไม่สามารถเข้าถึง \"เเอปพลิเคชั่นได้\"  โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</string>
-
 </resources>

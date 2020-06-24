@@ -1,9 +1,11 @@
 package com.ttawatchai.networklibrary
 
 import android.content.Context
+import android.net.ConnectivityManager
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
+import com.ttawatchai.networklibrary.model.BaseResponse
 import com.ttawatchai.networklibrary.model.ErrorResponse
 import com.ttawatchai.networklibrary.model.Resource
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +26,15 @@ class NetworkCall<T> {
 
 
     fun makeCall(context: Context, call: Call<T>): MutableLiveData<Resource<T>> {
+        if (!isNetworkConnected(context)) {
+            var result: MutableLiveData<Resource<T>> = MutableLiveData()
+            result.value = Resource.error(
+                context.getString(R.string.txt_internet_error),
+                null,
+                "internet error"
+            )
+            return result
+        }
         callService = call
         val callBackKt = CallBackKt<T>()
 //        callBackKt.result.value = Resource.loading(null)
@@ -38,19 +49,25 @@ class NetworkCall<T> {
         var result: MutableLiveData<Resource<T>> = MutableLiveData()
 
         override fun onFailure(call: Call<T>, t: Throwable) {
-            if (t.message != null) {
-                if (t.message == "timeout") {
-                    result.value = Resource.error(
-                        "เกิดข้อผิดพลาดเซิร์ฟเวอร์ไม่มีการตอบสนอง กรุณาลองใหม่อีกครั้ง",
-                        null
-                    )
-                    Log.e(LOG_TAG, t.message!!)
-                    t.printStackTrace()
+            if (!t.message.isNullOrEmpty()) {
+                if (t.message!!.contains("Failed to connect")) {
+                    result.value =
+                        Resource.connectFiled(
+                            "เกิดข้อผิดพลาด กรุณาเชื่อมต่ออินเตอร์เน็ต",
+                            null,
+                            ""
+                        )
                 } else {
-                    result.value = Resource.error("เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูเเลระบบ", null)
-                    Log.e(LOG_TAG, t.message!!)
-                    t.printStackTrace()
+                    result.value =
+                        Resource.error(
+                            "เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูเเลระบบ",
+                            null,
+                            "timeout"
+                        )
                 }
+
+                Log.e(LOG_TAG, t.message!!)
+                t.printStackTrace()
             }
         }
 
@@ -64,24 +81,43 @@ class NetworkCall<T> {
             } else {
                 try {
                     val gson = Gson()
-                    val error = JSONObject(response.errorBody()!!.string()).toString()
-                    val data = gson.fromJson(error, ErrorResponse::class.java)
-                    if (data != null && data.message.isEmpty()) {
-                        result.value =
-                            Resource.error("เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูเเลระบบ", null)
-                    } else {
-                        result.value = Resource.error(data.message, null)
-                    }
+                    var error = JSONObject(response.errorBody()!!.string()).toString()
                     Log.e(
                         LOG_TAG,
                         response.message() + " : " + error + "\n" + call.request().toString()
                     )
+                    val dataErrorResponse = gson.fromJson(error, BaseResponse::class.java)
+                    val data = gson.fromJson(error, ErrorResponse::class.java)
+                    if (data != null && data.message.isEmpty()) {
+                        result.value =
+                            Resource.error(
+                                "เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูเเลระบบ",
+                                null,
+                                dataErrorResponse.statusCode.toString()
+                            )
+                    } else {
+                        result.value =
+                            Resource.error(
+                                data.message,
+                                null,
+                                dataErrorResponse.statusCode.toString()
+                            )
+                    }
                 } catch (e: Exception) {
-                    result.value = Resource.error("เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูเเลระบบ", null)
+                    result.value = Resource.error(
+                        "เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูเเลระบบ",
+                        null,
+                        "exception"
+                    )
                 }
 
             }
         }
+    }
+
+    fun isNetworkConnected(context: Context): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        return cm.activeNetworkInfo != null && cm.activeNetworkInfo.isConnected
     }
 
 
