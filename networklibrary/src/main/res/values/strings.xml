@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="txt_internet_error">ไม่สามารถเข้าถึง \"เเอปพลิเคชั่นได้\"  โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</string>
+    <string name="txt_internet_error">An error has occurred. Please check your internet connection and try again</string>
+    <string name="msg_timeout">timeout</string>
+    <string name="msg_fail_connect">Failed to connect</string>
+    <string name="msg_fail_internet">internet error</string>
+    <string name="txt_call_api_error">An error has occurred. Please try again later</string>
 </resources>

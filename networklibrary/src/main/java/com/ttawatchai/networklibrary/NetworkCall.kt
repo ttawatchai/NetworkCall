@@ -18,26 +18,28 @@ import retrofit2.Response
 
 
 class NetworkCall<T> {
-    companion object{
+    companion object {
         val LOG_TAG: String = "Networkcall"
+        lateinit var baseContext: Context
 
     }
+
     private lateinit var callService: Call<T>
 
 
     fun makeCall(context: Context, call: Call<T>): MutableLiveData<Resource<T>> {
         if (!isNetworkConnected(context)) {
             var result: MutableLiveData<Resource<T>> = MutableLiveData()
+            baseContext = context
             result.value = Resource.error(
                 context.getString(R.string.txt_internet_error),
                 null,
-                "internet error"
+                baseContext.getString(R.string.msg_fail_internet)
             )
             return result
         }
         callService = call
         val callBackKt = CallBackKt<T>()
-//        callBackKt.result.value = Resource.loading(null)
         CoroutineScope(Dispatchers.IO).launch {
             callService.clone().enqueue(callBackKt)
         }
@@ -50,22 +52,21 @@ class NetworkCall<T> {
 
         override fun onFailure(call: Call<T>, t: Throwable) {
             if (!t.message.isNullOrEmpty()) {
-                if (t.message!!.contains("Failed to connect")) {
+                if (t.message!!.contains(baseContext.getString(R.string.msg_fail_connect))) {
                     result.value =
                         Resource.connectFiled(
-                            "เกิดข้อผิดพลาด กรุณาเชื่อมต่ออินเตอร์เน็ต",
+                            baseContext.getString(R.string.txt_internet_error),
                             null,
                             ""
                         )
                 } else {
                     result.value =
                         Resource.error(
-                            "เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูเเลระบบ",
+                             baseContext.getString(R.string.txt_internet_error),
                             null,
-                            "timeout"
+                            baseContext.getString(R.string.msg_timeout)
                         )
                 }
-
                 Log.e(LOG_TAG, t.message!!)
                 t.printStackTrace()
             }
@@ -84,14 +85,14 @@ class NetworkCall<T> {
                     var error = JSONObject(response.errorBody()!!.string()).toString()
                     Log.e(
                         LOG_TAG,
-                        response.message() + " : " + error + "\n" + call.request().toString()
+                        "${response.message()}   :  $error  \n  ${call.request()}"
                     )
                     val dataErrorResponse = gson.fromJson(error, BaseResponse::class.java)
                     val data = gson.fromJson(error, ErrorResponse::class.java)
                     if (data != null && data.message.isEmpty()) {
                         result.value =
                             Resource.error(
-                                "เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูเเลระบบ",
+                                 baseContext.getString(R.string.txt_internet_error),
                                 null,
                                 dataErrorResponse.statusCode.toString()
                             )
@@ -105,9 +106,9 @@ class NetworkCall<T> {
                     }
                 } catch (e: Exception) {
                     result.value = Resource.error(
-                        "เกิดข้อผิดพลาด กรุณาติดต่อผู้ดูเเลระบบ",
+                         baseContext.getString(R.string.txt_internet_error),
                         null,
-                        "exception"
+                        "exception"+e.message
                     )
                 }
 
