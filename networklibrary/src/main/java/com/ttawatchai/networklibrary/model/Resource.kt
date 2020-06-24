@@ -83,8 +83,11 @@ enum class Status {
     LOADING,
     NETWORK,
     WARNING,
+    PROGRESS,
     UNAUTHORIZED,
-    HAVE_TOKEN
+    FAILED,
+    HAVE_TOKEN,
+    IDLE, STARTING, READY, RUNNING, STOPPING, STOP, START
 }
 
 enum class StateDialog {
